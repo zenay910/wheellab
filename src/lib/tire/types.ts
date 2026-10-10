@@ -44,3 +44,37 @@ export interface ValidationResult {
   errors: ValidationIssue[]
   warnings: ValidationIssue[]
 }
+
+/** Nominal, unloaded dimensions derived from a `TireSize`. Lengths in millimetres. */
+export interface TireDimensions {
+  size: TireSize
+  sectionWidthMm: number
+  sidewallMm: number
+  rimDiameterMm: number
+  overallDiameterMm: number
+  circumferenceMm: number
+  revsPerKm: number
+  revsPerMile: number
+}
+
+/** Proposed minus original. `percent` is relative to the original value. */
+export interface DimensionDelta {
+  absolute: number
+  percent: number
+}
+
+export type DimensionKey = Exclude<keyof TireDimensions, "size">
+
+export interface TireComparison {
+  original: TireDimensions
+  proposed: TireDimensions
+  deltas: Record<DimensionKey, DimensionDelta>
+  /** Approximate change in ride height per corner: half the overall-diameter change. */
+  rideHeightChangeMm: number
+  /** `C_proposed / C_original`: actual speed (or distance) per unit indicated. */
+  speedRatio: number
+  /** Speedometer and odometer error in percent; positive means actual exceeds indicated. */
+  readingErrorPercent: number
+  /** True when overall diameter differs from the original by more than ±3%. */
+  fitmentCaution: boolean
+}

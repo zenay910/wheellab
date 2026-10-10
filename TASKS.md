@@ -5,7 +5,7 @@
 | | Task |
 |---|------|
 | **Now** | — (await approval for next task) |
-| **Next** | T05 — geometry and compare + tests |
+| **Next** | T06 — format and presets data |
 | **Blocked** | — |
 
 Phase time targets (Mountain Time, deadline Sat 12:00 PM):
@@ -69,12 +69,19 @@ Phase time targets (Mountain Time, deadline Sat 12:00 PM):
   - `src/lib/tire/`: `types.ts` (`TireSize`, `ParseResult`, `ValidationResult`, field-scoped `ValidationIssue`), `parse.ts` (`parseTireSize`), `validate.ts` (`validateTireSize`, `TIRE_LIMITS`), `index.ts` barrel. Pure TS, no React.
   - Parse = syntax only; validate = ranges. Accepts `P`/`LT` prefixes, case-insensitive, `R`/`ZR`/legacy `VR`-style/`D`/`B`/`-`/space separators, flexible spacing, half-inch rims, and ignores trailing service description (`91V`, `121/118S`, `XL`/`RF`/`SL`). Flotation (`33x12.50R17`) → `unsupported-format` error (P2). Error codes: `empty`, `unsupported-format`, `invalid-format`.
   - Validate per PROJECT.md: width 105–445 mm, aspect 20–95, rim 10–30 in with 0.5 in increments; width/aspect must be integers; non-finite → error; width not a multiple of 5 mm → **warning** (still valid). Max one error per field.
-  - Tests: `parse.test.ts` + `validate.test.ts` (68 cases) + smoke = 70 passing. `npm run build`, `lint`, `test` green.
+  - Tests: `parse.test.ts` + `validate.test.ts` (68 cases) + smoke = 70 passing at the time. `npm run build`, `lint`, `test` green.
   - **Not in scope:** `ST` (trailer) prefix rejected; `TireDimensions` type deferred to T05.
 
 ### T05 — Geometry and compare + tests
-- **Priority:** P0 | **Status:** pending | **Deps:** T04
+- **Priority:** P0 | **Status:** done | **Deps:** T04
 - **AC:** `geometry.ts`, `compare.ts`; reference fixtures (205/55R16, 225/45R17); speedo/odometer; ±3% fitment flag.
+- **Verified (2026-10-09):**
+  - `types.ts`: added `TireDimensions`, `DimensionDelta`, `DimensionKey`, `TireComparison`.
+  - `geometry.ts`: `computeDimensions(size)` → section width, sidewall, rim Ø, overall Ø, circumference (mm), revs/km, revs/mile per PROJECT.md formulas. Exports `MM_PER_INCH`, `MM_PER_KM`, `MM_PER_MILE`.
+  - `compare.ts`: `compareTires(original, proposed)` → both dimension sets, absolute + % deltas for every dimension (proposed − original, % of original), `rideHeightChangeMm` (ΔØ/2), `speedRatio` (C_p/C_o), `readingErrorPercent`, `fitmentCaution` (|ΔØ%| **> 3**, exactly 3% does not trigger). Helpers: `actualSpeed`, `actualDistance` (unit-agnostic), `isFitmentCaution`, `FITMENT_CAUTION_PERCENT`.
+  - Fixtures hand-computed: 205/55R16 → OD 631.9 mm; 225/45R17 → OD 634.3 mm; Δ +2.4 mm (+0.380%); 60 mph indicated → 60.228 actual; ride height +1.2 mm; no caution. Plus caution cases: 245/45R18 (+7.25%) and 185/60R14 (−8.59%, 100 → 91.41), identical sizes (all zero), threshold boundary table.
+  - 92 tests passing (22 new). Mutation check: flipping `>` to `>=` on the threshold, or dropping the `2×` on sidewall, both fail tests. `npm run build`, `lint`, `test` green.
+  - Inputs are assumed valid (callers run `validateTireSize` first); no guards against zero/negative sizes.
 
 ### T06 — Format and presets data
 - **Priority:** P0 | **Status:** pending | **Deps:** T05
