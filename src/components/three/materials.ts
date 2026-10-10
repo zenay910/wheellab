@@ -8,6 +8,30 @@ export const ROLE_COLOR: Record<TireRole, string> = {
   proposed: "#5eb8e8",
 }
 
+export interface ScenePalette {
+  /** Matches `--stage` so fog fades the floor into the stage background. */
+  stage: string
+  gridCell: string
+  gridSection: string
+  /** Guide lines and labels; darker in light mode for contrast on the pale stage. */
+  guide: Record<TireRole, string>
+}
+
+export const SCENE_PALETTE: Record<"light" | "dark", ScenePalette> = {
+  dark: {
+    stage: "#070707",
+    gridCell: "#1c1c1c",
+    gridSection: "#2c2c2c",
+    guide: ROLE_COLOR,
+  },
+  light: {
+    stage: "#f4f4f4",
+    gridCell: "#e0e0e0",
+    gridSection: "#c8c8c8",
+    guide: { original: "#6b6b6b", proposed: "#1f6aa5" },
+  },
+}
+
 export const rubberMaterial = {
   color: "#161616",
   roughness: 0.86,

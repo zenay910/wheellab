@@ -5,7 +5,7 @@ import * as THREE from "three"
 import { cn } from "@/lib/utils"
 
 import type { LabelPlacement, SceneLabel } from "./guideLabels"
-import { ROLE_COLOR } from "./materials"
+import type { TireRole } from "./materials"
 
 export type LabelElements = RefObject<Map<string, HTMLDivElement>>
 
@@ -27,9 +27,11 @@ const ALIGN_CLASS: Record<LabelPlacement, string> = {
 export function SceneLabelOverlay({
   labels,
   elements,
+  colors,
 }: {
   labels: SceneLabel[]
   elements: LabelElements
+  colors: Record<TireRole, string>
 }) {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -50,7 +52,7 @@ export function SceneLabelOverlay({
                 ALIGN_CLASS[label.placement],
               )}
             >
-              <span className={cn(label.caption && "uppercase")} style={{ color: ROLE_COLOR[label.role] }}>
+              <span className={cn(label.caption && "uppercase")} style={{ color: colors[label.role] }}>
                 {label.primary}
               </span>
               {label.secondary && <span className="text-muted-foreground">{label.secondary}</span>}

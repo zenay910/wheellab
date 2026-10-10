@@ -4,7 +4,7 @@ import { Line } from "@react-three/drei"
 import type { TireComparison, TireDimensions } from "@/lib/tire"
 
 import { frontPlaneZ } from "./guideLabels"
-import { ROLE_COLOR, type TireRole } from "./materials"
+import type { TireRole } from "./materials"
 import { MM_TO_SCENE } from "./tireProfile"
 import type { ComparisonViewMode } from "./TireScene"
 
@@ -13,6 +13,7 @@ interface ComparisonGuidesProps {
   mode: ComparisonViewMode
   /** Horizontal offset of each tire from the scene center (0 in overlay). */
   separation: number
+  colors: Record<TireRole, string>
 }
 
 const LINE_PAD = 0.05
@@ -21,7 +22,7 @@ const LINE_PAD = 0.05
  * Overall-height reference lines spanning both tires, plus coaxial outlines in overlay mode,
  * so the size difference reads without orbiting.
  */
-export function ComparisonGuides({ comparison, mode, separation }: ComparisonGuidesProps) {
+export function ComparisonGuides({ comparison, mode, separation, colors }: ComparisonGuidesProps) {
   const { original: o, proposed: p } = comparison
   const oR = (o.overallDiameterMm / 2) * MM_TO_SCENE
   const pR = (p.overallDiameterMm / 2) * MM_TO_SCENE
@@ -31,12 +32,12 @@ export function ComparisonGuides({ comparison, mode, separation }: ComparisonGui
 
   return (
     <group>
-      <HeightLine y={oR * 2} xMin={xMin} xMax={xMax} role="original" />
-      <HeightLine y={pR * 2} xMin={xMin} xMax={xMax} role="proposed" />
+      <HeightLine y={oR * 2} xMin={xMin} xMax={xMax} color={colors.original} dashed />
+      <HeightLine y={pR * 2} xMin={xMin} xMax={xMax} color={colors.proposed} />
       {mode === "overlay" && (
         <>
-          <TireOutline dims={o} z={z} role="original" dashed />
-          <TireOutline dims={p} z={z} role="proposed" />
+          <TireOutline dims={o} z={z} color={colors.original} dashed />
+          <TireOutline dims={p} z={z} color={colors.proposed} />
         </>
       )}
     </group>
@@ -47,12 +48,14 @@ function HeightLine({
   y,
   xMin,
   xMax,
-  role,
+  color,
+  dashed,
 }: {
   y: number
   xMin: number
   xMax: number
-  role: TireRole
+  color: string
+  dashed?: boolean
 }) {
   return (
     <Line
@@ -60,9 +63,9 @@ function HeightLine({
         [xMin, y, 0],
         [xMax, y, 0],
       ]}
-      color={ROLE_COLOR[role]}
+      color={color}
       lineWidth={1.25}
-      dashed={role === "original"}
+      dashed={dashed}
       dashSize={0.014}
       gapSize={0.01}
       transparent
@@ -77,12 +80,12 @@ function HeightLine({
 function TireOutline({
   dims,
   z,
-  role,
+  color,
   dashed,
 }: {
   dims: TireDimensions
   z: number
-  role: TireRole
+  color: string
   dashed?: boolean
 }) {
   const outerR = (dims.overallDiameterMm / 2) * MM_TO_SCENE
@@ -90,7 +93,7 @@ function TireOutline({
   const outer = useMemo(() => circlePoints(outerR, outerR, z), [outerR, z])
   const rim = useMemo(() => circlePoints(rimR, outerR, z), [rimR, outerR, z])
   const common = {
-    color: ROLE_COLOR[role],
+    color,
     lineWidth: 1.5,
     dashed,
     dashSize: 0.016,

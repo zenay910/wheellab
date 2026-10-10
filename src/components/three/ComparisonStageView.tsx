@@ -4,6 +4,7 @@ import { ComparisonStage } from "@/components/layout/ComparisonStage"
 import { TireSilhouette2D } from "@/components/tire/TireSilhouette2D"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { useMediaQuery } from "@/hooks/useMediaQuery"
+import type { Theme } from "@/hooks/usePreferences"
 import type { TireComparison, UnitSystem } from "@/lib/tire"
 
 import { TireScene, type ComparisonViewMode } from "./TireScene"
@@ -17,6 +18,7 @@ function initialViewMode(): ComparisonViewMode {
 interface ComparisonStageViewProps {
   comparison: TireComparison
   units: UnitSystem
+  theme: Theme
   label: string
   legend: ReactNode
   status: ReactNode
@@ -25,6 +27,7 @@ interface ComparisonStageViewProps {
 export function ComparisonStageView({
   comparison,
   units,
+  theme,
   label,
   legend,
   status,
@@ -69,7 +72,13 @@ export function ComparisonStageView({
       }
     >
       {webgl ? (
-        <TireScene comparison={comparison} units={units} mode={mode} compact={!isDesktop} />
+        <TireScene
+          comparison={comparison}
+          units={units}
+          mode={mode}
+          theme={theme}
+          compact={!isDesktop}
+        />
       ) : (
         <TireSilhouette2D comparison={comparison} units={units} />
       )}

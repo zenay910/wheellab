@@ -3,9 +3,11 @@ import { ContactShadows, Environment, Grid, Lightformer, OrbitControls } from "@
 import { Canvas, useThree } from "@react-three/fiber"
 import { TOUCH } from "three"
 
+import type { Theme } from "@/hooks/usePreferences"
 import type { TireComparison, UnitSystem } from "@/lib/tire"
 
 import { ComparisonGuides } from "./ComparisonGuides"
+import { SCENE_PALETTE, type ScenePalette } from "./materials"
 import { buildGuideLabels } from "./guideLabels"
 import { SceneLabelOverlay, SceneLabelProjector } from "./SceneLabels"
 import { TireMesh } from "./TireMesh"
@@ -17,11 +19,13 @@ interface TireSceneProps {
   comparison: TireComparison
   units: UnitSystem
   mode: ComparisonViewMode
+  theme: Theme
   /** Narrow stage (mobile): pull camera back and prefer overlay framing. */
   compact?: boolean
 }
 
-export function TireScene({ comparison, units, mode, compact }: TireSceneProps) {
+export function TireScene({ comparison, units, mode, theme, compact }: TireSceneProps) {
+  const palette = SCENE_PALETTE[theme]
   const maxH = Math.max(tireHeightM(comparison.original), tireHeightM(comparison.proposed))
   const separation = mode === "sideBySide" ? maxH * (compact ? 0.5 : 0.55) + 0.08 : 0
   const labels = useMemo(
@@ -40,10 +44,17 @@ export function TireScene({ comparison, units, mode, compact }: TireSceneProps) 
         dpr={[1, 2]}
         camera={{ fov: FOV_DEG, near: 0.01, far: 100, position: [0, 0.6, 2.2] }}
       >
-        <SceneContent comparison={comparison} mode={mode} maxH={maxH} separation={separation} />
+        <SceneContent
+          comparison={comparison}
+          mode={mode}
+          maxH={maxH}
+          separation={separation}
+          palette={palette}
+          shadowOpacity={theme === "dark" ? 0.55 : 0.35}
+        />
         <SceneLabelProjector labels={labels} elements={labelElements} />
       </Canvas>
-      <SceneLabelOverlay labels={labels} elements={labelElements} />
+      <SceneLabelOverlay labels={labels} elements={labelElements} colors={palette.guide} />
     </>
   )
 }
@@ -53,18 +64,22 @@ function SceneContent({
   mode,
   maxH,
   separation,
+  palette,
+  shadowOpacity,
 }: {
   comparison: TireComparison
   mode: ComparisonViewMode
   maxH: number
   separation: number
+  palette: ScenePalette
+  shadowOpacity: number
 }) {
   const { width, height } = useThree((s) => s.size)
   const dist = fitDistance(maxH, separation, width / Math.max(height, 1))
 
   return (
     <>
-      <fog attach="fog" args={[STAGE_COLOR, dist * 1.15, dist * 2.6]} />
+      <fog attach="fog" args={[palette.stage, dist * 1.15, dist * 2.6]} />
       <ambientLight intensity={0.32} />
       <directionalLight
         position={[5, 8, 4]}
@@ -90,14 +105,14 @@ function SceneContent({
         infiniteGrid
         cellSize={0.05}
         cellThickness={0.6}
-        cellColor="#1c1c1c"
+        cellColor={palette.gridCell}
         sectionSize={0.25}
         sectionThickness={1}
-        sectionColor="#2c2c2c"
+        sectionColor={palette.gridSection}
         fadeDistance={dist * 1.6}
         fadeStrength={1.5}
       />
-      <ContactShadows position={[0, 0.001, 0]} opacity={0.55} scale={14} blur={2.8} far={5} />
+      <ContactShadows position={[0, 0.001, 0]} opacity={shadowOpacity} scale={14} blur={2.8} far={5} />
 
       <group position={[-separation, 0, 0]}>
         <TireMesh dimensions={comparison.original} role="original" ghost={mode === "overlay"} />
@@ -105,7 +120,12 @@ function SceneContent({
       <group position={[separation, 0, 0]}>
         <TireMesh dimensions={comparison.proposed} role="proposed" />
       </group>
-      <ComparisonGuides comparison={comparison} mode={mode} separation={separation} />
+      <ComparisonGuides
+        comparison={comparison}
+        mode={mode}
+        separation={separation}
+        colors={palette.guide}
+      />
 
       <CameraRig maxHeight={maxH} distance={dist} />
       <OrbitControls
@@ -137,8 +157,6 @@ const StudioEnvironment = memo(function StudioEnvironment() {
 })
 
 const FOV_DEG = 42
-/** Matches `--stage` in dark mode so fog fades the floor into the stage background. */
-const STAGE_COLOR = "#070707"
 /** World-space room beside the tires for the diameter labels. */
 const LABEL_ROOM_M = 0.08
 
