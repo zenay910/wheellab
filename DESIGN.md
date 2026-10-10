@@ -124,7 +124,8 @@ One `Tabs` (`defaultValue="original"`) wraps both tire sections:
 
 ## Units
 
-- Global toggle in header; default **imperial** (PROJECT.md assumption 4). Tire size strings and section width always in mm.
+- Global toggle in header; default **imperial** (PROJECT.md assumption 4). Tire size strings and section width always in mm; TireSizeInput fields are never unit-converted.
+- Downstream panels (T09–T12) consume each tire's **last valid** size, so results never break mid-edit; TireSizeInput shows “Comparison uses …” while an error is visible.
 - `ToggleGroup type="single" variant="outline" size="sm" spacing={0}`; ignore empty value (Radix allows deselect).
 
 ## Typography scale
@@ -149,10 +150,58 @@ Use tabular figures for all numeric columns. Do not reduce text opacity below `t
 **Patterns (direction for T08–T12):**
 
 - **Data row:** label left (muted), value right (tabular), delta as signed value in `foreground` — no color. Rows `min-h-8 border-b border-border`, labels may wrap.
-- **TireSizeInput:** compact text field for the full size string + one row per field (width / aspect / rim).
+- **TireSizeInput:** see [TireSizeInput (T08)](#tiresizeinput-t08) — approved.
 - **ComparisonTable:** grid `grid-cols-[minmax(0,1fr)_repeat(3,auto)]` or a `<table>`; sticky column header within the scrolling data panel.
 - **SpeedometerPanel:** Slider for indicated speed; two readouts (indicated vs actual).
 - **Caution (T12):** `Badge variant="destructive"` + `WarningIcon` + text “Caution: diameter change >3%”.
+
+## TireSizeInput (T08)
+
+**Status:** Approved. Fills the `PanelSection` body of each rail tab (“Reference” badge on Original stays). Tire-size inputs are always mm / % / in — the unit toggle does not affect them.
+
+### Structure
+
+```
+Tire size                               ← Label
+[ 205/55R16                         ]   ← text Input (uppercase display)
+⊘ Use width/aspect R rim, e.g. …        ← parse error slot
+Width (mm)            [−][ 205 ][+]     ← spinbutton row
+Aspect (%)            [−][  55 ][+]
+Rim (in)              [−][  16 ][+]
+ⓘ Width 207 mm is not a standard size…  ← per-field message slot
+Comparison uses 205/55R16               ← only while an error is shown
+```
+
+- Root `flex flex-col gap-4`; text block `flex flex-col gap-1.5`; field rows in `div role="group" aria-label="Dimensions"`, each row `border-b border-border py-1.5 lg:py-1`, inner `flex items-center justify-between gap-2`.
+- Row label: shadcn `Label` with `text-muted-foreground`, text `Width (mm)` / `Aspect (%)` / `Rim (in)`.
+- Stepper: joined group `flex` — `Button variant="outline" size="icon"` (`MinusIcon`) + `Input` + `Button` (`PlusIcon`); input `-mx-px w-16 lg:w-14 text-center tabular-nums relative focus-visible:z-10`. No InputGroup component.
+- Sizing (mobile → desktop): controls `h-10` / buttons `size-10` below `lg`, `h-8` / `size-8` at `lg+`. Input font `text-base md:text-base lg:text-xs` (≥16px below `lg` prevents iOS focus zoom).
+- Field inputs are `type="text"` (not `number`) with `inputMode="numeric"` (width, aspect) / `"decimal"` (rim), `role="spinbutton"`, `aria-valuemin/max/now`, `aria-valuetext` (e.g. “205 mm”).
+- Stepper buttons: `type="button"`, `tabIndex={-1}` (arrow keys cover keyboard use), `aria-label="Decrease width"` etc., disabled at min/max.
+- Text input: `autoComplete="off" spellCheck={false} autoCapitalize="characters" enterKeyHint="done"`, `placeholder="205/55R16"`, class `uppercase` (display only).
+
+### Messages
+
+| Kind | Where | Style | Icon | `aria-invalid` |
+|------|-------|-------|------|----------------|
+| Parse error | under text input | `text-destructive` | `WarningCircleIcon` | text input |
+| Field error | under its row | `text-destructive` | `WarningCircleIcon` | that field + text input |
+| Width warning (non-standard step) | under width row | `text-muted-foreground` | `InfoIcon` | no |
+| Stale note | bottom of component | `text-muted-foreground`, size in `text-foreground tabular-nums` | none | — |
+
+- Message line: `flex items-start gap-1.5 pt-1 text-xs/relaxed`, icon `mt-0.5 size-3.5 shrink-0` `aria-hidden`. `WarningIcon` (triangle) stays reserved for the ±3% fitment caution.
+- Each control has a persistent message slot `div id="{id}-msg" aria-live="polite"` (empty when no message, never `hidden`) and `aria-describedby` pointing at it.
+- No amber/warning token — warnings are neutral.
+
+### Behaviour
+
+- **Live when valid, complain on commit.** Any keystroke that yields a parseable *and* valid size updates the comparison immediately. Errors appear only after commit (blur / Enter) or step, and clear as soon as the control becomes valid again.
+- Text normalizes to `formatTireSize` only on commit, never while typing. Committed (parseable) text is authoritative: it overwrites all three field drafts.
+- Stepper buttons `preventDefault` on mousedown so the field keeps focus (no commit/error flash before the step).
+- Keyboard: ArrowUp/ArrowDown on a field = ±1 step (snap to step, clamp to limits; `preventDefault`). Enter = commit. Escape = revert that tire to its last valid size. No Shift multiplier.
+- Steps snap to the grid: width 207 → + 210 / − 205; rim snaps to 0.5.
+- Mobile tabs: a tab whose tire shows an error gets a `WarningCircleIcon` (`size-3.5 text-destructive`) + `sr-only` “(has errors)” in its trigger.
+- Presets are out of scope (T22).
 
 ## 3D scene specification
 

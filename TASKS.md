@@ -5,7 +5,7 @@
 | | Task |
 |---|------|
 | **Now** | — (await approval for next task) |
-| **Next** | T08 — TireSizeInput (original + proposed), useReducer (UI — consult ui-ux-designer first) |
+| **Next** | T09 — ComparisonTable (UI — consult ui-ux-designer first; fix 1024 px label wrap / column width) |
 | **Blocked** | — |
 
 Phase time targets (Mountain Time, deadline Sat 12:00 PM):
@@ -109,8 +109,15 @@ Phase time targets (Mountain Time, deadline Sat 12:00 PM):
   - **Note:** `.cursor/agents/ui-ux-designer.md` isn't registered as a subagent type (workspace root is the parent `WheelLab/` folder; file also has a duplicated frontmatter block).
 
 ### T08 — TireSizeInput (original + proposed)
-- **Priority:** P0 | **Status:** pending | **Deps:** T04, T07
+- **Priority:** P0 | **Status:** done | **Deps:** T04, T07
 - **AC:** Text parse + steppers; validation UI; wired to `useReducer`.
+- **Verified (2026-10-09):**
+  - Designer spec first (DESIGN.md → "TireSizeInput (T08)", approved); designer review: all 12 checklist items pass, no must-fix. Applied 2 of 3 nice-to-haves (aspect `aria-valuetext` "55 percent"; stepper mousedown keeps field focus). Deferred: thin panel scrollbars (T20).
+  - `src/state/tireInputs.ts`: pure `tireInputsReducer` + `createInitialState`, `stepValue`, `getInputIssues`. Per-tire state: `text`, per-field drafts, `size` (may be invalid), `lastValid`, `showErrors` flags. "Live when valid, complain on commit": valid edits update `lastValid` immediately; errors show only after blur/Enter/step and clear once valid. Committed text is authoritative (overwrites field drafts). Escape reverts to `lastValid`. Steps snap to grid and clamp (207 → 210/205; rim 0.5); stepping a blank field starts from `lastValid`. Field edits keep `P`/`LT` prefix.
+  - `TireSizeInput`: text field + 3 spinbutton rows (−/+ steppers, ArrowUp/Down, Enter, Escape); parse/field errors (destructive + `WarningCircleIcon`), width warning (neutral + `InfoIcon`), "Comparison uses …" while an error is visible; `aria-invalid`, persistent `aria-live="polite"` message slots. `ControlRail` mobile tab error marker. App uses `useReducer`; stage legend/label read `lastValid`.
+  - Tests: `tireInputs.test.ts` (37). Total 167 passing. `npm run build`, `lint`, `test` green.
+  - Browser-verified (preview build): live update while typing; Enter normalizes; invalid text → error only after commit + stale note, stage keeps last valid; Escape revert; width 207 warning; ArrowUp rim 16 → 16.5; + snaps 207 → 210; 1024 px: 32 px controls, 12 px text, no row wrap in 256 px rail; 390 px: 16 px text (no iOS zoom), 40 px targets, tab error marker, no horizontal overflow.
+  - **Not verifiable here:** that a real mouse click on a stepper keeps focus in the field (the automation click moves focus); step result is correct either way.
 
 ### T09 — ComparisonTable
 - **Priority:** P0 | **Status:** pending | **Deps:** T05, T08
