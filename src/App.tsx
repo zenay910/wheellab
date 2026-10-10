@@ -1,5 +1,5 @@
 import { useMemo, useReducer } from "react"
-import { FunctionIcon, GaugeIcon, TableIcon } from "@phosphor-icons/react"
+import { FunctionIcon, GaugeIcon, ListChecksIcon, TableIcon } from "@phosphor-icons/react"
 
 import { AppHeader } from "@/components/layout/AppHeader"
 import { AppShell } from "@/components/layout/AppShell"
@@ -10,15 +10,20 @@ import { ComparisonTable } from "@/components/tire/ComparisonTable"
 import { FitmentCaution, FitmentCautionDetail } from "@/components/tire/FitmentCaution"
 import { FitmentDisclaimer } from "@/components/tire/FitmentDisclaimer"
 import { ExplanationPanel } from "@/components/tire/ExplanationPanel"
+import { SimpleSummary } from "@/components/tire/SimpleSummary"
 import { SpeedometerPanel } from "@/components/tire/SpeedometerPanel"
 import { TireSizeInput } from "@/components/tire/TireSizeInput"
 import { TireSwatch } from "@/components/tire/TireSwatch"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { useDetailLevel, useTheme, type DetailLevel } from "@/hooks/usePreferences"
 import { compareTires, formatTireSize } from "@/lib/tire"
 import { createInitialState, getInputIssues, tireInputsReducer } from "@/state/tireInputs"
 
 function App() {
   const [state, dispatch] = useReducer(tireInputsReducer, undefined, () => createInitialState())
+  const [theme, setTheme] = useTheme()
+  const [detail, setDetail] = useDetailLevel()
   const originalSize = state.original.lastValid
   const proposedSize = state.proposed.lastValid
   const originalLabel = formatTireSize(originalSize)
@@ -35,6 +40,8 @@ function App() {
           <AppHeader
             units={state.units}
             onUnitsChange={(units) => dispatch({ type: "unitsChanged", units })}
+            theme={theme}
+            onThemeChange={setTheme}
           />
         }
         rail={
@@ -51,6 +58,7 @@ function App() {
           <ComparisonStageView
             comparison={comparison}
             units={state.units}
+            theme={theme}
             label={`Tire comparison: ${originalLabel} original vs ${proposedLabel} proposed`}
             legend={
               <>
@@ -63,23 +71,68 @@ function App() {
         }
         data={
           <>
-            <PanelSection title="Comparison" icon={<TableIcon />}>
-              <FitmentCautionDetail comparison={comparison} />
-              <ComparisonTable comparison={comparison} units={state.units} />
-            </PanelSection>
+            <DetailToggle value={detail} onChange={setDetail} />
+            {detail === "simple" ? (
+              <PanelSection title="Summary" icon={<ListChecksIcon />}>
+                <SimpleSummary
+                  comparison={comparison}
+                  units={state.units}
+                  onShowDetails={() => setDetail("detailed")}
+                />
+              </PanelSection>
+            ) : (
+              <>
+                <PanelSection title="Comparison" icon={<TableIcon />}>
+                  <FitmentCautionDetail comparison={comparison} />
+                  <ComparisonTable comparison={comparison} units={state.units} />
+                </PanelSection>
 
-            <PanelSection title="Speedometer" icon={<GaugeIcon />}>
-              <SpeedometerPanel comparison={comparison} units={state.units} />
-            </PanelSection>
+                <PanelSection title="Speedometer" icon={<GaugeIcon />}>
+                  <SpeedometerPanel comparison={comparison} units={state.units} />
+                </PanelSection>
 
-            <PanelSection title="Calculations" icon={<FunctionIcon />}>
-              <ExplanationPanel comparison={comparison} />
-            </PanelSection>
+                <PanelSection title="Calculations" icon={<FunctionIcon />}>
+                  <ExplanationPanel comparison={comparison} />
+                </PanelSection>
+              </>
+            )}
           </>
         }
         footer={<FitmentDisclaimer />}
       />
     </TooltipProvider>
+  )
+}
+
+const DETAIL_ITEM_CLASS = "flex-1 text-muted-foreground data-[state=on]:text-foreground"
+
+function DetailToggle({
+  value,
+  onChange,
+}: {
+  value: DetailLevel
+  onChange: (value: DetailLevel) => void
+}) {
+  return (
+    <div className="border-b border-border px-4 py-3">
+      <ToggleGroup
+        type="single"
+        variant="outline"
+        size="sm"
+        spacing={0}
+        value={value}
+        onValueChange={(v) => v && onChange(v as DetailLevel)}
+        aria-label="Level of detail"
+        className="w-full"
+      >
+        <ToggleGroupItem value="simple" className={DETAIL_ITEM_CLASS}>
+          Simple
+        </ToggleGroupItem>
+        <ToggleGroupItem value="detailed" className={DETAIL_ITEM_CLASS}>
+          Detailed
+        </ToggleGroupItem>
+      </ToggleGroup>
+    </div>
   )
 }
 
