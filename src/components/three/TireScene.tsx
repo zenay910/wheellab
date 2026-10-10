@@ -1,6 +1,8 @@
 import { useLayoutEffect, useMemo } from "react"
 import { ContactShadows, Environment, Lightformer, OrbitControls } from "@react-three/drei"
 import { Canvas, useThree } from "@react-three/fiber"
+import { TOUCH } from "three"
+
 import type { TireComparison } from "@/lib/tire"
 
 import { TireMesh } from "./TireMesh"
@@ -11,23 +13,25 @@ export type ComparisonViewMode = "sideBySide" | "overlay"
 interface TireSceneProps {
   comparison: TireComparison
   mode: ComparisonViewMode
+  /** Narrow stage (mobile): pull camera back and prefer overlay framing. */
+  compact?: boolean
 }
 
-export function TireScene({ comparison, mode }: TireSceneProps) {
+export function TireScene({ comparison, mode, compact }: TireSceneProps) {
   return (
     <Canvas
-      className="absolute inset-0 touch-none"
+      className="absolute inset-0 size-full touch-none"
       gl={{ alpha: true, antialias: true }}
       shadows
       dpr={[1, 2]}
       camera={{ fov: 42, near: 0.01, far: 100, position: [0, 0.6, 2.2] }}
     >
-      <SceneContent comparison={comparison} mode={mode} />
+      <SceneContent comparison={comparison} mode={mode} compact={compact} />
     </Canvas>
   )
 }
 
-function SceneContent({ comparison, mode }: TireSceneProps) {
+function SceneContent({ comparison, mode, compact }: TireSceneProps) {
   const maxH = useMemo(
     () =>
       Math.max(
@@ -37,7 +41,8 @@ function SceneContent({ comparison, mode }: TireSceneProps) {
     [comparison],
   )
 
-  const separation = mode === "sideBySide" ? maxH * 0.55 + 0.12 : 0
+  const separation =
+    mode === "sideBySide" ? (compact ? maxH * 0.42 + 0.08 : maxH * 0.55 + 0.12) : 0
 
   return (
     <>
@@ -62,7 +67,7 @@ function SceneContent({ comparison, mode }: TireSceneProps) {
         <TireMesh dimensions={comparison.proposed} role="proposed" />
       </group>
 
-      <CameraRig maxHeight={maxH} separation={separation} mode={mode} />
+      <CameraRig maxHeight={maxH} separation={separation} mode={mode} compact={compact} />
       <OrbitControls
         makeDefault
         enableDamping
@@ -72,6 +77,7 @@ function SceneContent({ comparison, mode }: TireSceneProps) {
         maxPolarAngle={Math.PI / 2 - 0.08}
         minPolarAngle={0.15}
         target={[0, maxH * 0.45, 0]}
+        touches={{ ONE: TOUCH.ROTATE, TWO: TOUCH.DOLLY_PAN }}
       />
     </>
   )
@@ -81,19 +87,22 @@ function CameraRig({
   maxHeight,
   separation,
   mode,
+  compact,
 }: {
   maxHeight: number
   separation: number
   mode: ComparisonViewMode
+  compact?: boolean
 }) {
   const { camera } = useThree()
 
   useLayoutEffect(() => {
     const span = mode === "sideBySide" ? separation * 2 + maxHeight : maxHeight
-    const dist = Math.max(span * 1.35, maxHeight * 2.2)
-    camera.position.set(separation * 0.35, maxHeight * 0.55, dist)
+    const distScale = compact ? 1.55 : 1.35
+    const dist = Math.max(span * distScale, maxHeight * (compact ? 2.6 : 2.2))
+    camera.position.set(separation * 0.35, maxHeight * (compact ? 0.5 : 0.55), dist)
     camera.lookAt(0, maxHeight * 0.45, 0)
-  }, [camera, maxHeight, separation, mode])
+  }, [camera, maxHeight, separation, mode, compact])
 
   return null
 }

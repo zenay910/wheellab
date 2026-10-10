@@ -30,18 +30,18 @@ export function AppShell({ header, rail, stage, data, footer }: AppShellProps) {
         <section
           id="tire-inputs"
           aria-label="Tire sizes"
-          className="border-b border-border lg:min-h-0 lg:overflow-y-auto lg:border-r lg:border-b-0"
+          className="panel-scroll border-b border-border lg:min-h-0 lg:overflow-y-auto lg:border-r lg:border-b-0"
         >
           {rail}
         </section>
 
-        <div className="relative order-first h-[40svh] min-h-64 border-b border-border lg:order-none lg:h-auto lg:min-h-0 lg:border-b-0">
+        <div className="relative order-first h-[min(40svh,420px)] min-h-64 border-b border-border lg:order-none lg:h-auto lg:min-h-0 lg:max-h-none lg:border-b-0">
           {stage}
         </div>
 
         <section
           aria-label="Comparison results"
-          className="lg:min-h-0 lg:overflow-y-auto lg:border-l lg:border-border"
+          className="panel-scroll lg:min-h-0 lg:overflow-y-auto lg:border-l lg:border-border"
         >
           {data}
         </section>

@@ -3,10 +3,16 @@ import { useMemo, useState, type ReactNode } from "react"
 import { ComparisonStage } from "@/components/layout/ComparisonStage"
 import { TireSilhouette2D } from "@/components/tire/TireSilhouette2D"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { useMediaQuery } from "@/hooks/useMediaQuery"
 import type { TireComparison, UnitSystem } from "@/lib/tire"
 
 import { TireScene, type ComparisonViewMode } from "./TireScene"
 import { isWebGLAvailable } from "./webgl"
+
+function initialViewMode(): ComparisonViewMode {
+  if (typeof window === "undefined") return "sideBySide"
+  return window.innerWidth >= 1024 ? "sideBySide" : "overlay"
+}
 
 interface ComparisonStageViewProps {
   comparison: TireComparison
@@ -24,7 +30,8 @@ export function ComparisonStageView({
   status,
 }: ComparisonStageViewProps) {
   const webgl = useMemo(() => isWebGLAvailable(), [])
-  const [mode, setMode] = useState<ComparisonViewMode>("sideBySide")
+  const [mode, setMode] = useState<ComparisonViewMode>(initialViewMode)
+  const isDesktop = useMediaQuery("(min-width: 1024px)")
 
   return (
     <ComparisonStage
@@ -43,16 +50,17 @@ export function ComparisonStageView({
               if (v === "sideBySide" || v === "overlay") setMode(v)
             }}
             aria-label="Comparison view mode"
+            className="flex-wrap justify-end"
           >
             <ToggleGroupItem
               value="sideBySide"
-              className="text-muted-foreground data-[state=on]:text-foreground"
+              className="px-2 text-muted-foreground data-[state=on]:text-foreground max-sm:text-[10px] sm:px-2.5"
             >
               Side by side
             </ToggleGroupItem>
             <ToggleGroupItem
               value="overlay"
-              className="text-muted-foreground data-[state=on]:text-foreground"
+              className="px-2 text-muted-foreground data-[state=on]:text-foreground max-sm:text-[10px] sm:px-2.5"
             >
               Overlay
             </ToggleGroupItem>
@@ -61,7 +69,7 @@ export function ComparisonStageView({
       }
     >
       {webgl ? (
-        <TireScene comparison={comparison} mode={mode} />
+        <TireScene comparison={comparison} mode={mode} compact={!isDesktop} />
       ) : (
         <TireSilhouette2D comparison={comparison} units={units} />
       )}

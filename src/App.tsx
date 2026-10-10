@@ -9,6 +9,7 @@ import { ComparisonStageView } from "@/components/three/ComparisonStageView"
 import { ComparisonTable } from "@/components/tire/ComparisonTable"
 import { FitmentCaution, FitmentCautionDetail } from "@/components/tire/FitmentCaution"
 import { FitmentDisclaimer } from "@/components/tire/FitmentDisclaimer"
+import { ExplanationPanel } from "@/components/tire/ExplanationPanel"
 import { SpeedometerPanel } from "@/components/tire/SpeedometerPanel"
 import { TireSizeInput } from "@/components/tire/TireSizeInput"
 import { TireSwatch } from "@/components/tire/TireSwatch"
@@ -72,9 +73,7 @@ function App() {
             </PanelSection>
 
             <PanelSection title="Calculations" icon={<FunctionIcon />}>
-              <p className="text-xs/relaxed text-muted-foreground">
-                Formulas and assumptions for each value.
-              </p>
+              <ExplanationPanel comparison={comparison} />
             </PanelSection>
           </>
         }

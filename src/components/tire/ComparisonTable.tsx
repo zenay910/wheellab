@@ -86,9 +86,9 @@ export function ComparisonTable({ comparison, units }: ComparisonTableProps) {
       </caption>
       <colgroup>
         <col />
-        <col className="w-16" />
-        <col className="w-16" />
-        <col className="w-[4.5rem]" />
+        <col className="w-[3.25rem] sm:w-16" />
+        <col className="w-[3.25rem] sm:w-16" />
+        <col className="w-[3.75rem] sm:w-[4.5rem]" />
       </colgroup>
       <thead>
         <tr className="text-muted-foreground uppercase">

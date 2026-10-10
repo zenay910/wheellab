@@ -28,12 +28,20 @@ export function ComparisonStage({
       {children ?? <StageEmptyState caption={caption} />}
 
       {legend && (
-        <div className="pointer-events-none absolute top-3 left-3 flex flex-col gap-1 text-xs">
+        <div className="pointer-events-none absolute top-2 left-2 flex max-w-[calc(100%-7rem)] flex-col gap-0.5 text-[10px] sm:top-3 sm:left-3 sm:max-w-none sm:gap-1 sm:text-xs">
           {legend}
         </div>
       )}
-      {toolbar && <div className="absolute top-3 right-3">{toolbar}</div>}
-      {status && <div className="absolute bottom-3 left-3">{status}</div>}
+      {toolbar && (
+        <div className="absolute top-2 right-2 max-w-[calc(100%-1rem)] sm:top-3 sm:right-3">
+          {toolbar}
+        </div>
+      )}
+      {status && (
+        <div className="absolute right-2 bottom-2 left-2 max-lg:hidden lg:bottom-3 lg:left-3 lg:max-w-[min(100%,20rem)]">
+          {status}
+        </div>
+      )}
     </section>
   )
 }

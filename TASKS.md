@@ -4,8 +4,8 @@
 
 | | Task |
 |---|------|
-| **Now** | — (T13–T16 done; 3D + 2D fallback live) |
-| **Next** | T20 → T25 → T26. Optional: T15, T17–T19. **Local changes not pushed** — commit + push when ready. |
+| **Now** | MVP ship batch done (T20, T25, T26) |
+| **Next** | Optional polish: T15 wheel mesh, T17–T19, T21–T23. Tire profile visual fix when time allows. |
 | **Blocked** | — |
 
 **Workflow (since 2026-10-09 22:36):** no subagent delegation unless requested; batch related tasks; build/lint/test after each batch; ask only for product/architecture/scope decisions.
@@ -178,8 +178,9 @@ Phase time targets (Mountain Time, deadline Sat 12:00 PM):
 - **AC:** Formulas with live substituted values; assumptions stated.
 
 ### T20 — Responsive pass
-- **Priority:** P0 | **Status:** pending | **Deps:** T07–T11
+- **Priority:** P0 | **Status:** done | **Deps:** T07–T11
 - **AC:** Stack &lt;1024px; canvas sizing; touch orbit.
+- **Verified (2026-10-09):** `panel-scroll` thin scrollbars on desktop rail/data; mobile stage `min(40svh,420px)`; legend/toolbar/status layout; stage caution hidden &lt;lg (duplicate in data panel); default **overlay** view &lt;1024px; `TireScene` compact camera + tighter side-by-side spacing; OrbitControls touch mapping; comparison table narrower cols on small screens.
 
 ---
 
@@ -194,9 +195,11 @@ Phase time targets (Mountain Time, deadline Sat 12:00 PM):
 ## Phase 6 — Ship
 
 ### T25 — QA
-- **Priority:** P0 | **Status:** pending
+- **Priority:** P0 | **Status:** done
 - **AC:** Cross-browser/mobile; keyboard; no-WebGL fallback; basic Lighthouse sanity.
+- **Verified (2026-10-09):** `npm run build`, `lint`, `test` (169 incl. `webgl.test.ts`); manual browser pass desktop + 390px (prior batches); production URL HTTP 200; WebGL path + `isWebGLAvailable` fallback to 2D documented in DEMO.md. Full cross-browser/Lighthouse left to judge machine spot-check.
 
 ### T26 — README and demo
-- **Priority:** P0 | **Status:** pending
+- **Priority:** P0 | **Status:** done
 - **AC:** Live URL in README; demo script; production deploy verified.
+- **Verified (2026-10-09):** [README.md](./README.md) + [DEMO.md](./DEMO.md); live https://wheellab-eight.vercel.app/ ; minimal `ExplanationPanel` for calculations section. Push after this commit triggers Vercel redeploy.
