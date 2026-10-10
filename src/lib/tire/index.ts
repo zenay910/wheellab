@@ -9,3 +9,5 @@ export {
   compareTires,
   isFitmentCaution,
 } from "./compare"
+export * from "./format"
+export * from "./presets"

@@ -5,7 +5,7 @@
 | | Task |
 |---|------|
 | **Now** | — (await approval for next task) |
-| **Next** | T06 — format and presets data |
+| **Next** | T07 — app shell + shadcn components (UI — consult ui-ux-designer first) |
 | **Blocked** | — |
 
 Phase time targets (Mountain Time, deadline Sat 12:00 PM):
@@ -84,8 +84,12 @@ Phase time targets (Mountain Time, deadline Sat 12:00 PM):
   - Inputs are assumed valid (callers run `validateTireSize` first); no guards against zero/negative sizes.
 
 ### T06 — Format and presets data
-- **Priority:** P0 | **Status:** pending | **Deps:** T05
+- **Priority:** P0 | **Status:** done | **Deps:** T05
 - **AC:** `format.ts` (mm/in, km/h/mph, deltas); `presets.ts` stub or full list for P2.
+- **Verified (2026-10-09):**
+  - `format.ts`: `UnitSystem` (`"metric" | "imperial"`); `formatLength` / `formatLengthDelta` (mm 1 dp, in 2 dp), `formatSpeed` (km/h, mph), `formatDistance` (km, mi), `formatRevs` (rev/km, rev/mi), `formatPercentDelta` (`+0.38%`), `formatTireSize` (`LT215/85R16.5`); helpers `formatNumber`, `formatSigned`, `mmToInches`, `convertSpeed`, `KM_PER_MILE`. Fixed `en-US` locale, thousands separators, true minus sign (U+2212), no negative zero; values rounding to zero are unsigned.
+  - `presets.ts`: `DEFAULT_ORIGINAL` (205/55R16) / `DEFAULT_PROPOSED` (225/45R17) for initial state; `TIRE_PRESETS` — 15 common sizes in 5 categories (compact, sedan, performance, suv, truck incl. 2 `LT`). Plus-size suggestions remain T22.
+  - Tests: `format.test.ts`, `presets.test.ts` — every preset validates with no warnings and round-trips `formatTireSize` → `parseTireSize`. 130 passing (38 new). `npm run build`, `lint`, `test` green.
 
 ---
 
