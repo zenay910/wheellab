@@ -4,9 +4,11 @@
 
 | | Task |
 |---|------|
-| **Now** | — (await approval for next task) |
-| **Next** | T09 — ComparisonTable (UI — consult ui-ux-designer first; fix 1024 px label wrap / column width) |
+| **Now** | — (T13–T16 done; 3D + 2D fallback live) |
+| **Next** | T20 → T25 → T26. Optional: T15, T17–T19. **Local changes not pushed** — commit + push when ready. |
 | **Blocked** | — |
+
+**Workflow (since 2026-10-09 22:36):** no subagent delegation unless requested; batch related tasks; build/lint/test after each batch; ask only for product/architecture/scope decisions.
 
 Phase time targets (Mountain Time, deadline Sat 12:00 PM):
 
@@ -120,40 +122,48 @@ Phase time targets (Mountain Time, deadline Sat 12:00 PM):
   - **Not verifiable here:** that a real mouse click on a stepper keeps focus in the field (the automation click moves focus); step result is correct either way.
 
 ### T09 — ComparisonTable
-- **Priority:** P0 | **Status:** pending | **Deps:** T05, T08
+- **Priority:** P0 | **Status:** done | **Deps:** T05, T08
 - **AC:** All dimensions + absolute and % deltas.
+- **Verified (2026-10-09):** `tire/ComparisonTable.tsx` — native fixed-layout `<table>`; units shown once under each label (fixes the 1024 px "Overall diameter" wrap); section width always mm (DESIGN.md); ride height per corner; Δ stacked with %. Added `lengthUnit`, `formatLengthValue`, `formatLengthDeltaValue` to `format.ts` (+ tests). Browser-checked at 1024 and 390 px, metric and imperial; 245/45R18 → +7.25% matches fixtures.
 
 ### T10 — SpeedometerPanel
-- **Priority:** P0 | **Status:** pending | **Deps:** T05, T08
+- **Priority:** P0 | **Status:** done | **Deps:** T05, T08
 - **AC:** Indicated speed slider; actual speed; odometer per 100 km/mi; unit toggle.
+- **Verified (2026-10-09):** `tire/SpeedometerPanel.tsx` — slider (per-unit value, so toggling units gives no odd numbers), actual speed via `actualSpeed`, error %, odometer 100 → actual via `actualDistance`, plain-language summary + calibration assumption. Default 60 mph → 60.2 mph. Slider labelled via group (Radix exposes labels only on the thumb).
 
 ### T11 — TireSilhouette2D
-- **Priority:** P0 | **Status:** pending | **Deps:** T05, T08
+- **Priority:** P0 | **Status:** done | **Deps:** T05, T08
 - **AC:** SVG side view, common ground line, scale bar; WebGL fallback path.
+- **Verified (2026-10-09):** `tire/TireSilhouette2D.tsx` — side + front silhouettes of both tires on one ground line at a single mm→px scale (ResizeObserver, no viewBox), dashed original outline over the proposed, adaptive scale bar (mm / in). Reusable as the WebGL fallback in T13. Original stroke muted, proposed `stroke-proposed`.
 
 ### T12 — Fitment disclaimer + caution badge
-- **Priority:** P0 | **Status:** pending | **Deps:** T05
+- **Priority:** P0 | **Status:** done | **Deps:** T05
 - **AC:** PROJECT.md copy; ±3% caution visible.
+- **Verified (2026-10-09):** `tire/FitmentCaution.tsx` — destructive badge + `WarningIcon` + text, shown in the stage and above the comparison table with a short explanation when |Δ diameter| > 3%. Disclaimer footer unchanged (verbatim).
+- **Batch checks:** `npm run build`, `lint`, `test` (168) green.
 
 ---
 
 ## Phase 3–4 — 3D and polish
 
 ### T13 — TireScene
-- **Priority:** P1 | **Status:** pending | **Deps:** T03
+- **Priority:** P1 | **Status:** done | **Deps:** T03
 - **AC:** Canvas, Lightformers, ContactShadows, OrbitControls limits, responsive container.
+- **Verified (2026-10-09):** `three/TireScene.tsx` — alpha Canvas, Lightformer `Environment` (no HDR CDN), ground plane + shadows, damped OrbitControls with polar limits. `ComparisonStageView` falls back to `TireSilhouette2D` when WebGL unavailable.
 
 ### T14 — TireMesh (LatheGeometry)
-- **Priority:** P1 | **Status:** pending | **Deps:** T13, T05
+- **Priority:** P1 | **Status:** done | **Deps:** T13, T05
 - **AC:** Profile from dims; dispose on update; bounding box within 0.5% of computed OD/width.
+- **Verified (2026-10-09):** `tireProfile.ts` + `TireMesh.tsx` — lathe profile from `TireDimensions`, 96 segments, rubber + minimal rim lathe (full wheel deferred to T15), geometry dispose on change, auto-lift so contact sits on ground plane.
 
 ### T15 — WheelMesh
 - **Priority:** P1 | **Status:** pending | **Deps:** T14
 - **AC:** Barrel, face, spokes, hub.
 
 ### T16 — Side-by-side and overlay modes
-- **Priority:** P1 | **Status:** pending | **Deps:** T14
+- **Priority:** P1 | **Status:** done | **Deps:** T14
 - **AC:** Camera auto-fit to larger tire.
+- **Verified (2026-10-09):** Toolbar toggle Side by side / Overlay; overlay renders original at ~38% opacity coaxially; camera reframes on mode + size change. Batch: build/lint/test (168) green.
 
 ### T17 — DimensionAnnotations
 - **Priority:** P1 | **Status:** pending | **Deps:** T16

@@ -6,12 +6,15 @@ import {
   formatDistance,
   formatLength,
   formatLengthDelta,
+  formatLengthDeltaValue,
+  formatLengthValue,
   formatNumber,
   formatPercentDelta,
   formatRevs,
   formatSigned,
   formatSpeed,
   formatTireSize,
+  lengthUnit,
   mmToInches,
 } from "./format"
 import { computeDimensions } from "./geometry"
@@ -70,6 +73,15 @@ describe("lengths", () => {
     expect(formatLengthDelta(2.4, "imperial")).toBe("+0.09 in")
     expect(formatLengthDelta(-11.5, "metric")).toBe(`${M}11.5 mm`)
     expect(formatLengthDelta(0, "imperial")).toBe("0.00 in")
+  })
+
+  it("formats unit-less values that match the unit-bearing formatters", () => {
+    expect(lengthUnit("metric")).toBe("mm")
+    expect(lengthUnit("imperial")).toBe("in")
+    expect(formatLengthValue(1985.1724, "metric")).toBe("1,985.2")
+    expect(formatLengthValue(631.9, "imperial")).toBe("24.88")
+    expect(formatLengthDeltaValue(2.4, "metric")).toBe("+2.4")
+    expect(formatLengthDeltaValue(-11.5, "imperial")).toBe(`${M}0.45`)
   })
 })
 

@@ -44,6 +44,23 @@ const LENGTH = {
   imperial: { unit: "in", decimals: 2, fromMm: mmToInches },
 } as const
 
+/** Unit label for lengths in `system`: `mm` or `in`. */
+export function lengthUnit(system: UnitSystem): string {
+  return LENGTH[system].unit
+}
+
+/** Length without its unit: `631.9` or `24.88` (for table cells whose unit is shown elsewhere). */
+export function formatLengthValue(mm: number, system: UnitSystem): string {
+  const { decimals, fromMm } = LENGTH[system]
+  return formatNumber(fromMm(mm), decimals)
+}
+
+/** Signed length change without its unit: `+2.4` or `+0.09`. */
+export function formatLengthDeltaValue(mm: number, system: UnitSystem): string {
+  const { decimals, fromMm } = LENGTH[system]
+  return formatSigned(fromMm(mm), decimals)
+}
+
 /** `631.9 mm` or `24.88 in`. */
 export function formatLength(mm: number, system: UnitSystem): string {
   const { unit, decimals, fromMm } = LENGTH[system]

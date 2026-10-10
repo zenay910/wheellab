@@ -1,33 +1,31 @@
-import { useReducer } from "react"
+import { useMemo, useReducer } from "react"
 import { FunctionIcon, GaugeIcon, TableIcon } from "@phosphor-icons/react"
 
 import { AppHeader } from "@/components/layout/AppHeader"
 import { AppShell } from "@/components/layout/AppShell"
-import { ComparisonStage } from "@/components/layout/ComparisonStage"
 import { ControlRail } from "@/components/layout/ControlRail"
 import { PanelSection } from "@/components/layout/PanelSection"
+import { ComparisonStageView } from "@/components/three/ComparisonStageView"
+import { ComparisonTable } from "@/components/tire/ComparisonTable"
+import { FitmentCaution, FitmentCautionDetail } from "@/components/tire/FitmentCaution"
 import { FitmentDisclaimer } from "@/components/tire/FitmentDisclaimer"
+import { SpeedometerPanel } from "@/components/tire/SpeedometerPanel"
 import { TireSizeInput } from "@/components/tire/TireSizeInput"
 import { TireSwatch } from "@/components/tire/TireSwatch"
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { formatTireSize } from "@/lib/tire"
+import { compareTires, formatTireSize } from "@/lib/tire"
 import { createInitialState, getInputIssues, tireInputsReducer } from "@/state/tireInputs"
-
-const COMPARISON_ROWS = [
-  "Section width",
-  "Sidewall height",
-  "Rim diameter",
-  "Overall diameter",
-  "Circumference",
-  "Revolutions",
-]
-
-const TABLE_GRID = "grid grid-cols-[minmax(0,1fr)_repeat(3,4.5rem)] gap-x-2"
 
 function App() {
   const [state, dispatch] = useReducer(tireInputsReducer, undefined, () => createInitialState())
-  const originalLabel = formatTireSize(state.original.lastValid)
-  const proposedLabel = formatTireSize(state.proposed.lastValid)
+  const originalSize = state.original.lastValid
+  const proposedSize = state.proposed.lastValid
+  const originalLabel = formatTireSize(originalSize)
+  const proposedLabel = formatTireSize(proposedSize)
+  const comparison = useMemo(
+    () => compareTires(originalSize, proposedSize),
+    [originalSize, proposedSize],
+  )
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -49,42 +47,28 @@ function App() {
           />
         }
         stage={
-          <ComparisonStage
+          <ComparisonStageView
+            comparison={comparison}
+            units={state.units}
             label={`Tire comparison: ${originalLabel} original vs ${proposedLabel} proposed`}
-            caption={`${originalLabel} vs ${proposedLabel}`}
             legend={
               <>
                 <LegendRow tire="original" name="Original" size={originalLabel} />
                 <LegendRow tire="proposed" name="Proposed" size={proposedLabel} />
               </>
             }
+            status={<FitmentCaution comparison={comparison} />}
           />
         }
         data={
           <>
             <PanelSection title="Comparison" icon={<TableIcon />}>
-              <div className={`${TABLE_GRID} pb-1 text-xs text-muted-foreground uppercase`}>
-                <span />
-                <span className="text-right">Original</span>
-                <span className="text-right">Proposed</span>
-                <span className="text-right">Δ</span>
-              </div>
-              {COMPARISON_ROWS.map((label) => (
-                <div
-                  key={label}
-                  className={`${TABLE_GRID} min-h-8 items-center border-b border-border text-xs`}
-                >
-                  <span className="text-muted-foreground">{label}</span>
-                  <span className="text-right text-muted-foreground">—</span>
-                  <span className="text-right text-muted-foreground">—</span>
-                  <span className="text-right text-muted-foreground">—</span>
-                </div>
-              ))}
+              <FitmentCautionDetail comparison={comparison} />
+              <ComparisonTable comparison={comparison} units={state.units} />
             </PanelSection>
 
             <PanelSection title="Speedometer" icon={<GaugeIcon />}>
-              <PlaceholderRow label="Indicated" value="—" />
-              <PlaceholderRow label="Actual" value="—" />
+              <SpeedometerPanel comparison={comparison} units={state.units} />
             </PanelSection>
 
             <PanelSection title="Calculations" icon={<FunctionIcon />}>
@@ -97,15 +81,6 @@ function App() {
         footer={<FitmentDisclaimer />}
       />
     </TooltipProvider>
-  )
-}
-
-function PlaceholderRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex min-h-8 items-center justify-between border-b border-border text-xs">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="tabular-nums">{value}</span>
-    </div>
   )
 }
 
