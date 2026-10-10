@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from "react"
 import * as THREE from "three"
 
-import type { TireDimensions } from "@/lib/tire"
+import { computeDimensions, type TireDimensions } from "@/lib/tire"
 
 import { ROLE_COLOR, rubberMaterial, type TireRole } from "./materials"
 import { buildSidewallStripeGeometry, buildTireGeometry } from "./tireGeometry"
@@ -17,8 +17,10 @@ interface TireMeshProps {
 
 /** Revolved tire body with tread, role-colored sidewall stripe, and wheel. Axle along Z, resting on y = 0. */
 export function TireMesh({ dimensions, role, ghost }: TireMeshProps) {
-  const tire = useMemo(() => buildTireGeometry(dimensions), [dimensions])
-  const stripe = useMemo(() => buildSidewallStripeGeometry(dimensions), [dimensions])
+  // Keyed on `size` (stable while the other tire is edited) so only the changed tire rebuilds.
+  const { size } = dimensions
+  const tire = useMemo(() => buildTireGeometry(computeDimensions(size)), [size])
+  const stripe = useMemo(() => buildSidewallStripeGeometry(computeDimensions(size)), [size])
   useEffect(
     () => () => {
       tire.dispose()

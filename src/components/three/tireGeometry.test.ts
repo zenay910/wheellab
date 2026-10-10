@@ -26,6 +26,33 @@ describe("buildTireGeometry", () => {
     geometry.dispose()
   })
 
+  it("faces point outward on the tread and sidewall", () => {
+    const geometry = buildTireGeometry(dims("225/45R17"))
+    const pos = geometry.getAttribute("position")
+    const normal = geometry.getAttribute("normal")
+    let outermost = 0
+    let widest = 0
+    const radius = (i: number) => Math.hypot(pos.getX(i), pos.getY(i))
+    for (let i = 0; i < pos.count; i++) {
+      if (pos.getZ(i) > pos.getZ(widest)) widest = i
+      if (radius(i) > radius(outermost)) outermost = i
+    }
+    const radialNormal =
+      (normal.getX(outermost) * pos.getX(outermost) + normal.getY(outermost) * pos.getY(outermost)) /
+      radius(outermost)
+    expect(radialNormal).toBeGreaterThan(0.5)
+    expect(normal.getZ(widest)).toBeGreaterThan(0.5)
+    geometry.dispose()
+  })
+
+  it("builds fast enough to rebuild on every size edit", () => {
+    const d = dims("265/70R17")
+    buildTireGeometry(d).dispose()
+    const t0 = performance.now()
+    buildTireGeometry(d).dispose()
+    expect(performance.now() - t0).toBeLessThan(150)
+  })
+
   it("keeps the bead inside the section width", () => {
     const s = tireShape(dims("225/45R17"))
     expect(s.beadHalf).toBeLessThan(s.sectionHalf)

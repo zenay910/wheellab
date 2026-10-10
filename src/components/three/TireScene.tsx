@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef } from "react"
+import { memo, useLayoutEffect, useMemo, useRef } from "react"
 import { ContactShadows, Environment, Grid, Lightformer, OrbitControls } from "@react-three/drei"
 import { Canvas, useThree } from "@react-three/fiber"
 import { TOUCH } from "three"
@@ -36,6 +36,7 @@ export function TireScene({ comparison, units, mode, compact }: TireSceneProps) 
         className="absolute inset-0 size-full touch-none"
         gl={{ alpha: true, antialias: true }}
         shadows
+        frameloop="demand"
         dpr={[1, 2]}
         camera={{ fov: FOV_DEG, near: 0.01, far: 100, position: [0, 0.6, 2.2] }}
       >
@@ -78,13 +79,7 @@ function SceneContent({
         shadow-bias={-0.0002}
       />
       <directionalLight position={[-3, 4, -2]} intensity={0.35} />
-      <Environment resolution={512}>
-        <Lightformer form="rect" intensity={4} rotation-x={Math.PI / 2} position={[0, 5, 0]} scale={[10, 10, 1]} />
-        <Lightformer form="rect" intensity={2.5} rotation-y={Math.PI / 2} position={[-5, 2.5, 1]} scale={[8, 8, 1]} />
-        <Lightformer form="ring" intensity={2} rotation-y={Math.PI / 2} position={[5, 2, 3]} scale={4} />
-        <Lightformer form="rect" intensity={1.2} position={[0, 1, -5]} scale={[6, 3, 1]} />
-        <Lightformer form="rect" intensity={1.6} rotation-y={Math.PI} position={[0, 1, 6]} scale={[10, 4, 1]} />
-      </Environment>
+      <StudioEnvironment />
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow position={[0, 0, 0]}>
         <planeGeometry args={[14, 14]} />
@@ -127,6 +122,19 @@ function SceneContent({
     </>
   )
 }
+
+/** Memoized: drei's <Environment> re-captures its cube map whenever its children change identity. */
+const StudioEnvironment = memo(function StudioEnvironment() {
+  return (
+    <Environment resolution={512}>
+      <Lightformer form="rect" intensity={4} rotation-x={Math.PI / 2} position={[0, 5, 0]} scale={[10, 10, 1]} />
+      <Lightformer form="rect" intensity={2.5} rotation-y={Math.PI / 2} position={[-5, 2.5, 1]} scale={[8, 8, 1]} />
+      <Lightformer form="ring" intensity={2} rotation-y={Math.PI / 2} position={[5, 2, 3]} scale={4} />
+      <Lightformer form="rect" intensity={1.2} position={[0, 1, -5]} scale={[6, 3, 1]} />
+      <Lightformer form="rect" intensity={1.6} rotation-y={Math.PI} position={[0, 1, 6]} scale={[10, 4, 1]} />
+    </Environment>
+  )
+})
 
 const FOV_DEG = 42
 /** Matches `--stage` in dark mode so fog fades the floor into the stage background. */

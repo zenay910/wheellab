@@ -1,6 +1,4 @@
 import * as THREE from "three"
-import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js"
-
 import type { TireDimensions } from "@/lib/tire"
 
 import { MM_TO_SCENE } from "./tireProfile"
@@ -16,10 +14,10 @@ export interface TireShape {
   beadHalf: number
 }
 
-const ANGULAR_SEGMENTS = 480
-const TREAD_STEPS = 96
+const ANGULAR_SEGMENTS = 360
+const TREAD_STEPS = 64
 const CROWN_MM = 2
-const TREAD_PITCH_MM = 34
+const TREAD_PITCH_MM = 40
 
 export function tireShape(dims: TireDimensions): TireShape {
   const outerR = dims.overallDiameterMm / 2
@@ -36,7 +34,7 @@ export function tireShape(dims: TireDimensions): TireShape {
 }
 
 /** Sidewall from bead to shoulder on the +axial side, as (axial, radius) points. */
-function sidewallPoints(s: TireShape): THREE.Vector2[] {
+function sidewallPoints(s: TireShape, samples = 28): THREE.Vector2[] {
   const H = s.sidewall
   const sidewall = new THREE.SplineCurve([
     new THREE.Vector2(s.beadHalf, s.rimR),
@@ -44,14 +42,14 @@ function sidewallPoints(s: TireShape): THREE.Vector2[] {
     new THREE.Vector2(s.sectionHalf, s.rimR + H * 0.45),
     new THREE.Vector2(s.sectionHalf * 0.97, s.rimR + H * 0.72),
     new THREE.Vector2(s.treadHalf + (s.sectionHalf - s.treadHalf) * 0.75, s.outerR - H * 0.1),
-  ]).getPoints(56)
+  ]).getPoints(samples)
 
   const shoulderStart = sidewall[sidewall.length - 1]
   const shoulder = new THREE.QuadraticBezierCurve(
     shoulderStart,
     new THREE.Vector2(shoulderStart.x, s.outerR - CROWN_MM),
     new THREE.Vector2(s.treadHalf, s.outerR - CROWN_MM),
-  ).getPoints(16)
+  ).getPoints(8)
 
   return [...sidewall, ...shoulder.slice(1)]
 }
@@ -61,8 +59,8 @@ function treadGroove(u: number, pitch: number): number {
   const au = Math.abs(u)
   const side = u > 0 ? 0.5 : 0
   if (Math.abs(au - 0.2) < 0.045 || Math.abs(au - 0.58) < 0.05) return 1
-  if (au > 0.58) return frac(pitch + side) < 0.2 ? 1 : 0
-  if (au > 0.2) return frac(pitch + u * 1.4 + side * 0.5) < 0.09 ? 0.55 : 0
+  if (au > 0.58) return frac(pitch + side) < 0.25 ? 1 : 0
+  if (au > 0.2) return frac(pitch + u * 1.4 + side * 0.5) < 0.12 ? 0.55 : 0
   return 0
 }
 
@@ -85,45 +83,64 @@ export function buildTireGeometry(dims: TireDimensions): THREE.BufferGeometry {
     tread.push(new THREE.Vector2(a, s.outerR - CROWN_MM * u * u))
   }
 
-  // Counter-clockwise loop in (radius, axial) so the lathe faces point outward.
-  const loopAxialRadius = [
+  // Closed cross-section loop as (axial, radius): bore, -axial sidewall, tread, +axial sidewall.
+  const profile = [
+    new THREE.Vector2(s.beadHalf, s.rimR - 1),
+    new THREE.Vector2(-s.beadHalf, s.rimR - 1),
     ...side.map((p) => new THREE.Vector2(-p.x, p.y)),
     ...tread,
     ...[...side].reverse(),
   ]
-  const profile = [
-    new THREE.Vector2(s.rimR - 1, s.beadHalf),
-    new THREE.Vector2(s.rimR - 1, -s.beadHalf),
-    ...loopAxialRadius.map((p) => new THREE.Vector2(p.y, p.x)),
-    new THREE.Vector2(s.rimR - 1, s.beadHalf),
-  ]
-
-  const lathe = new THREE.LatheGeometry(profile, ANGULAR_SEGMENTS)
-  lathe.deleteAttribute("normal")
-  lathe.deleteAttribute("uv")
-  const geometry = mergeVertices(lathe)
-  lathe.dispose()
 
   const pitches = Math.round((2 * Math.PI * s.outerR) / TREAD_PITCH_MM)
   const depth = Math.min(8, s.sidewall * 0.08)
   const treadFloor = s.outerR - CROWN_MM - 0.01
-  const pos = geometry.getAttribute("position") as THREE.BufferAttribute
-  for (let i = 0; i < pos.count; i++) {
-    const x = pos.getX(i)
-    const a = pos.getY(i)
-    const z = pos.getZ(i)
-    const r = Math.hypot(x, z)
-    if (r < treadFloor || Math.abs(a) > s.treadHalf) continue
-    const g = treadGroove(a / s.treadHalf, (Math.atan2(x, z) / (2 * Math.PI)) * pitches)
-    if (g === 0) continue
-    const k = (r - depth * g) / r
-    pos.setX(i, x * k)
-    pos.setZ(i, z * k)
+  const n = ANGULAR_SEGMENTS
+  const m = profile.length
+
+  // Indexed grid wrapping in both directions: no seam duplicates, so normals stay smooth.
+  const positions = new Float32Array(n * m * 3)
+  for (let i = 0; i < n; i++) {
+    const phi = (i / n) * Math.PI * 2
+    const cos = Math.cos(phi)
+    const sin = Math.sin(phi)
+    const pitch = (i / n) * pitches
+    for (let j = 0; j < m; j++) {
+      const a = profile[j].x
+      let r = profile[j].y
+      if (r >= treadFloor && Math.abs(a) <= s.treadHalf) {
+        r -= depth * treadGroove(a / s.treadHalf, pitch)
+      }
+      const k = (i * m + j) * 3
+      positions[k] = r * cos * MM_TO_SCENE
+      positions[k + 1] = r * sin * MM_TO_SCENE
+      positions[k + 2] = a * MM_TO_SCENE
+    }
   }
 
+  const indices = new Uint32Array(n * m * 6)
+  let t = 0
+  for (let i = 0; i < n; i++) {
+    const i1 = (i + 1) % n
+    for (let j = 0; j < m; j++) {
+      const j1 = (j + 1) % m
+      const a = i * m + j
+      const b = i1 * m + j
+      const c = i1 * m + j1
+      const d = i * m + j1
+      indices[t++] = a
+      indices[t++] = b
+      indices[t++] = d
+      indices[t++] = b
+      indices[t++] = c
+      indices[t++] = d
+    }
+  }
+
+  const geometry = new THREE.BufferGeometry()
+  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3))
+  geometry.setIndex(new THREE.BufferAttribute(indices, 1))
   geometry.computeVertexNormals()
-  geometry.scale(MM_TO_SCENE, MM_TO_SCENE, MM_TO_SCENE)
-  geometry.rotateX(Math.PI / 2)
   return geometry
 }
 
@@ -132,12 +149,12 @@ export function buildSidewallStripeGeometry(dims: TireDimensions): THREE.BufferG
   const s = tireShape(dims)
   const lo = s.rimR + s.sidewall * 0.56
   const hi = s.rimR + s.sidewall * 0.63
-  const band = sidewallPoints(s)
+  const band = sidewallPoints(s, 120)
     .filter((p) => p.y >= lo && p.y <= hi)
     .map((p) => new THREE.Vector2(p.y, p.x + 0.6))
   if (band.length < 2) return new THREE.BufferGeometry()
 
-  const geometry = new THREE.LatheGeometry(band, 256)
+  const geometry = new THREE.LatheGeometry(band, 128)
   geometry.scale(MM_TO_SCENE, MM_TO_SCENE, MM_TO_SCENE)
   geometry.rotateX(Math.PI / 2)
   return geometry

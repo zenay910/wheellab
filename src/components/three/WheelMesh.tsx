@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from "react"
 import * as THREE from "three"
 
-import type { TireDimensions } from "@/lib/tire"
+import { computeDimensions, type TireDimensions } from "@/lib/tire"
 
 import {
   ROLE_COLOR,
@@ -23,7 +23,8 @@ const LUG_COUNT = 5
 
 /** Twin-spoke wheel with brake disc and role-colored caliper — axle along Z (matches tire). */
 export function WheelMesh({ dimensions, role }: WheelMeshProps) {
-  const m = useMemo(() => computeWheelMetrics(dimensions), [dimensions])
+  const { size } = dimensions
+  const m = useMemo(() => computeWheelMetrics(computeDimensions(size)), [size])
   const spokeGeometry = useMemo(() => buildSpokeGeometry(m), [m])
   useEffect(() => () => spokeGeometry.dispose(), [spokeGeometry])
 
