@@ -15,7 +15,11 @@ interface TireMeshProps {
   ghost?: boolean
 }
 
-/** Revolved tire body with tread, role-colored sidewall stripe, and wheel. Axle along Z, resting on y = 0. */
+/**
+ * Revolved tire body with tread, role-colored sidewall stripe, and wheel. Axle along Z, resting on y = 0.
+ * Ghost and solid branches are keyed so switching remounts the material (R3F does not reset removed
+ * props like `transparent`/`opacity`); `dispose={null}` keeps the shared geometry alive across that.
+ */
 export function TireMesh({ dimensions, role, ghost }: TireMeshProps) {
   // Keyed on `size` (stable while the other tire is edited) so only the changed tire rebuilds.
   const { size } = dimensions
@@ -33,8 +37,8 @@ export function TireMesh({ dimensions, role, ghost }: TireMeshProps) {
 
   if (ghost) {
     return (
-      <group position={[0, outerR, 0]}>
-        <mesh geometry={tire}>
+      <group key="ghost" position={[0, outerR, 0]}>
+        <mesh geometry={tire} dispose={null}>
           <meshStandardMaterial
             color={ROLE_COLOR[role]}
             roughness={0.6}
@@ -49,12 +53,12 @@ export function TireMesh({ dimensions, role, ghost }: TireMeshProps) {
   }
 
   return (
-    <group position={[0, outerR, 0]}>
-      <mesh geometry={tire} castShadow receiveShadow>
+    <group key="solid" position={[0, outerR, 0]}>
+      <mesh geometry={tire} castShadow receiveShadow dispose={null}>
         <meshStandardMaterial {...rubberMaterial} />
       </mesh>
       {[1, -1].map((side) => (
-        <mesh key={side} geometry={stripe} scale={[1, 1, side]}>
+        <mesh key={side} geometry={stripe} scale={[1, 1, side]} dispose={null}>
           <meshStandardMaterial
             color={ROLE_COLOR[role]}
             roughness={0.5}

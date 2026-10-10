@@ -62,7 +62,13 @@ export function WheelMesh({ dimensions, role }: WheelMeshProps) {
         const angle = (pair / SPOKE_PAIRS) * Math.PI * 2 + Math.PI / 2 + offset
         return (
           <group key={i} rotation={[0, 0, angle]} position={[0, 0, spokeZ]}>
-            <mesh geometry={spokeGeometry} rotation={[0, spokeTilt, 0]} castShadow receiveShadow>
+            <mesh
+              geometry={spokeGeometry}
+              rotation={[0, spokeTilt, 0]}
+              castShadow
+              receiveShadow
+              dispose={null}
+            >
               <meshStandardMaterial {...finish} />
             </mesh>
           </group>
