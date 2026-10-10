@@ -5,7 +5,7 @@
 | | Task |
 |---|------|
 | **Now** | — (await approval for next task) |
-| **Next** | T07 — app shell + shadcn components (UI — consult ui-ux-designer first) |
+| **Next** | T08 — TireSizeInput (original + proposed), useReducer (UI — consult ui-ux-designer first) |
 | **Blocked** | — |
 
 Phase time targets (Mountain Time, deadline Sat 12:00 PM):
@@ -96,8 +96,17 @@ Phase time targets (Mountain Time, deadline Sat 12:00 PM):
 ## Phase 2 — MVP UI
 
 ### T07 — App shell + shadcn components
-- **Priority:** P0 | **Status:** pending | **Deps:** T03, DESIGN.md
+- **Priority:** P0 | **Status:** done | **Deps:** T03, DESIGN.md
 - **AC:** Layout per DESIGN.md; add input, label, tabs, toggle-group, slider, tooltip, separator, badge.
+- **Verified (2026-10-09):**
+  - Design spec from ui-ux-designer (run as a generalPurpose subagent with the designer prompt — see note); DESIGN.md → v1 (approved shell, tokens, dark-only, `--proposed` accent, grid). Designer review: pass; must-fix (rail divider) + 3 small items applied.
+  - shadcn added via CLI, unmodified: input, label, tabs, toggle-group (+ toggle), slider, tooltip, separator, badge. No new npm deps.
+  - Tokens: `--proposed` (dark `oklch(0.74 0.12 232)`), `--proposed-foreground`, `--stage`; `html.dark`, color-scheme/theme-color meta, `public/favicon.svg`.
+  - Components: `layout/` AppShell, AppHeader (unit ToggleGroup, default imperial, can't be deselected), WheelLabMark, PanelSection, ControlRail (mobile tabs / desktop stacked via forceMount), ComparisonStage (empty state + legend/toolbar/status slots); `tire/` TireSwatch, FitmentDisclaimer (PROJECT.md copy verbatim). App.tsx: placeholders only, no tire math.
+  - Browser-verified: 1280×800 → rail 288 / stage 576 / data 416, header 48, footer pinned, no page scroll; 1024 renders all regions; 390×844 → sticky header, stage 338 px (40svh) first, tabs switch, footer last, no horizontal overflow; skip link visible on focus; a11y tree: 1 h1, h2 per panel, 3 named regions.
+  - `npm run build`, `lint`, `test` (130) green.
+  - **Deferred:** at 1024 px "Overall diameter" wraps in the data table; value columns (4.5rem) too narrow for `1,985.2 mm` → fix in T09 (~5rem or units in label).
+  - **Note:** `.cursor/agents/ui-ux-designer.md` isn't registered as a subagent type (workspace root is the parent `WheelLab/` folder; file also has a duplicated frontmatter block).
 
 ### T08 — TireSizeInput (original + proposed)
 - **Priority:** P0 | **Status:** pending | **Deps:** T04, T07
