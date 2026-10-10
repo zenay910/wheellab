@@ -4,8 +4,8 @@
 
 | | Task |
 |---|------|
-| **Now** | — (await approval for next task after Phase 0 docs) |
-| **Next** | T02 — git init, GitHub, Vercel skeleton |
+| **Now** | — (await approval for next task) |
+| **Next** | T03 — dependencies, Vitest, template cleanup |
 | **Blocked** | — |
 
 Phase time targets (Mountain Time, deadline Sat 12:00 PM):
@@ -35,9 +35,14 @@ Phase time targets (Mountain Time, deadline Sat 12:00 PM):
 
 ### T02 — Repository and deploy skeleton
 - **Priority:** P0
-- **Status:** pending
+- **Status:** done
 - **Deps:** T01
 - **AC:** Git initialized; public GitHub repo; Vercel connected; skeleton URL loads (placeholder app OK).
+- **Verified (2026-10-09):**
+  - Git root = Vite app root (`wheellab/`); `main` tracks `origin` → https://github.com/zenay910/wheellab (public, GitHub API 200).
+  - Vercel project imported from GitHub (auto-deploy on push to `main`): https://wheellab-eight.vercel.app/ — HTTP 200, JS bundle hash matches local `npm run build`, placeholder Vite page renders in browser.
+  - `npm run build` passes. No `vercel.json` needed (Vite defaults, no router).
+  - **Known issue (carry to T03):** `npm run lint` fails with 1 error — `react-refresh/only-export-components` in shadcn-generated `src/components/ui/button.tsx` (exports `buttonVariants`). Fix in T03 via an ESLint override for `src/components/ui/**`.
 
 ### T03 — Dependencies, Vitest, template cleanup
 - **Priority:** P0

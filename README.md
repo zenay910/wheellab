@@ -2,7 +2,8 @@
 
 Interactive tire and wheel size comparison for Ensign BUILD 2026. Enter original and proposed metric tire sizes, compare nominal dimensions and rolling circumference, and see how speedometer and odometer readings change — with a proportional 2D/3D visual comparison.
 
-**Live demo:** _(URL after Vercel deploy — see T02)_
+**Live demo:** https://wheellab-eight.vercel.app/  
+**Source:** https://github.com/zenay910/wheellab
 
 ## Stack
 
