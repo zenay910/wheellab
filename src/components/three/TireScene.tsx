@@ -1,10 +1,13 @@
-import { useLayoutEffect, useMemo } from "react"
-import { ContactShadows, Environment, Lightformer, OrbitControls } from "@react-three/drei"
+import { useLayoutEffect, useMemo, useRef } from "react"
+import { ContactShadows, Environment, Grid, Lightformer, OrbitControls } from "@react-three/drei"
 import { Canvas, useThree } from "@react-three/fiber"
 import { TOUCH } from "three"
 
-import type { TireComparison } from "@/lib/tire"
+import type { TireComparison, UnitSystem } from "@/lib/tire"
 
+import { ComparisonGuides } from "./ComparisonGuides"
+import { buildGuideLabels } from "./guideLabels"
+import { SceneLabelOverlay, SceneLabelProjector } from "./SceneLabels"
 import { TireMesh } from "./TireMesh"
 import { tireHeightM } from "./tireProfile"
 
@@ -12,40 +15,55 @@ export type ComparisonViewMode = "sideBySide" | "overlay"
 
 interface TireSceneProps {
   comparison: TireComparison
+  units: UnitSystem
   mode: ComparisonViewMode
   /** Narrow stage (mobile): pull camera back and prefer overlay framing. */
   compact?: boolean
 }
 
-export function TireScene({ comparison, mode, compact }: TireSceneProps) {
-  return (
-    <Canvas
-      className="absolute inset-0 size-full touch-none"
-      gl={{ alpha: true, antialias: true }}
-      shadows
-      dpr={[1, 2]}
-      camera={{ fov: 42, near: 0.01, far: 100, position: [0, 0.6, 2.2] }}
-    >
-      <SceneContent comparison={comparison} mode={mode} compact={compact} />
-    </Canvas>
+export function TireScene({ comparison, units, mode, compact }: TireSceneProps) {
+  const maxH = Math.max(tireHeightM(comparison.original), tireHeightM(comparison.proposed))
+  const separation = mode === "sideBySide" ? maxH * (compact ? 0.5 : 0.55) + 0.08 : 0
+  const labels = useMemo(
+    () => buildGuideLabels(comparison, units, mode, separation),
+    [comparison, units, mode, separation],
   )
-}
-
-function SceneContent({ comparison, mode, compact }: TireSceneProps) {
-  const maxH = useMemo(
-    () =>
-      Math.max(
-        tireHeightM(comparison.original),
-        tireHeightM(comparison.proposed),
-      ),
-    [comparison],
-  )
-
-  const separation =
-    mode === "sideBySide" ? (compact ? maxH * 0.42 + 0.08 : maxH * 0.55 + 0.12) : 0
+  const labelElements = useRef(new Map<string, HTMLDivElement>())
 
   return (
     <>
+      <Canvas
+        className="absolute inset-0 size-full touch-none"
+        gl={{ alpha: true, antialias: true }}
+        shadows
+        dpr={[1, 2]}
+        camera={{ fov: FOV_DEG, near: 0.01, far: 100, position: [0, 0.6, 2.2] }}
+      >
+        <SceneContent comparison={comparison} mode={mode} maxH={maxH} separation={separation} />
+        <SceneLabelProjector labels={labels} elements={labelElements} />
+      </Canvas>
+      <SceneLabelOverlay labels={labels} elements={labelElements} />
+    </>
+  )
+}
+
+function SceneContent({
+  comparison,
+  mode,
+  maxH,
+  separation,
+}: {
+  comparison: TireComparison
+  mode: ComparisonViewMode
+  maxH: number
+  separation: number
+}) {
+  const { width, height } = useThree((s) => s.size)
+  const dist = fitDistance(maxH, separation, width / Math.max(height, 1))
+
+  return (
+    <>
+      <fog attach="fog" args={[STAGE_COLOR, dist * 1.15, dist * 2.6]} />
       <ambientLight intensity={0.32} />
       <directionalLight
         position={[5, 8, 4]}
@@ -65,12 +83,25 @@ function SceneContent({ comparison, mode, compact }: TireSceneProps) {
         <Lightformer form="rect" intensity={2.5} rotation-y={Math.PI / 2} position={[-5, 2.5, 1]} scale={[8, 8, 1]} />
         <Lightformer form="ring" intensity={2} rotation-y={Math.PI / 2} position={[5, 2, 3]} scale={4} />
         <Lightformer form="rect" intensity={1.2} position={[0, 1, -5]} scale={[6, 3, 1]} />
+        <Lightformer form="rect" intensity={1.6} rotation-y={Math.PI} position={[0, 1, 6]} scale={[10, 4, 1]} />
       </Environment>
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow position={[0, 0, 0]}>
         <planeGeometry args={[14, 14]} />
-        <meshStandardMaterial color="#121212" roughness={0.92} metalness={0.05} />
+        <shadowMaterial opacity={0.45} />
       </mesh>
+      <Grid
+        position={[0, 0.0005, 0]}
+        infiniteGrid
+        cellSize={0.05}
+        cellThickness={0.6}
+        cellColor="#1c1c1c"
+        sectionSize={0.25}
+        sectionThickness={1}
+        sectionColor="#2c2c2c"
+        fadeDistance={dist * 1.6}
+        fadeStrength={1.5}
+      />
       <ContactShadows position={[0, 0.001, 0]} opacity={0.55} scale={14} blur={2.8} far={5} />
 
       <group position={[-separation, 0, 0]}>
@@ -79,14 +110,15 @@ function SceneContent({ comparison, mode, compact }: TireSceneProps) {
       <group position={[separation, 0, 0]}>
         <TireMesh dimensions={comparison.proposed} role="proposed" />
       </group>
+      <ComparisonGuides comparison={comparison} mode={mode} separation={separation} />
 
-      <CameraRig maxHeight={maxH} separation={separation} mode={mode} compact={compact} />
+      <CameraRig maxHeight={maxH} distance={dist} />
       <OrbitControls
         makeDefault
         enableDamping
         dampingFactor={0.08}
         minDistance={maxH * 1.2}
-        maxDistance={maxH * 5}
+        maxDistance={dist * 2}
         maxPolarAngle={Math.PI / 2 - 0.08}
         minPolarAngle={0.15}
         target={[0, maxH * 0.45, 0]}
@@ -96,26 +128,27 @@ function SceneContent({ comparison, mode, compact }: TireSceneProps) {
   )
 }
 
-function CameraRig({
-  maxHeight,
-  separation,
-  mode,
-  compact,
-}: {
-  maxHeight: number
-  separation: number
-  mode: ComparisonViewMode
-  compact?: boolean
-}) {
+const FOV_DEG = 42
+/** Matches `--stage` in dark mode so fog fades the floor into the stage background. */
+const STAGE_COLOR = "#070707"
+/** World-space room beside the tires for the diameter labels. */
+const LABEL_ROOM_M = 0.08
+
+/** Camera distance that fits both tires plus guide labels in the current viewport aspect. */
+function fitDistance(maxHeight: number, separation: number, aspect: number): number {
+  const tanHalf = Math.tan(((FOV_DEG / 2) * Math.PI) / 180)
+  const halfH = maxHeight * 0.72
+  const halfW = separation + maxHeight / 2 + LABEL_ROOM_M
+  return Math.max(halfH / tanHalf, halfW / (tanHalf * aspect))
+}
+
+function CameraRig({ maxHeight, distance }: { maxHeight: number; distance: number }) {
   const { camera } = useThree()
 
   useLayoutEffect(() => {
-    const span = mode === "sideBySide" ? separation * 2 + maxHeight : maxHeight
-    const distScale = compact ? 1.55 : 1.35
-    const dist = Math.max(span * distScale, maxHeight * (compact ? 2.6 : 2.2))
-    camera.position.set(separation * 0.35, maxHeight * (compact ? 0.5 : 0.55), dist)
+    camera.position.set(0, maxHeight * 0.62, distance)
     camera.lookAt(0, maxHeight * 0.45, 0)
-  }, [camera, maxHeight, separation, mode, compact])
+  }, [camera, maxHeight, distance])
 
   return null
 }

@@ -69,7 +69,7 @@ export function ComparisonStageView({
       }
     >
       {webgl ? (
-        <TireScene comparison={comparison} mode={mode} compact={!isDesktop} />
+        <TireScene comparison={comparison} units={units} mode={mode} compact={!isDesktop} />
       ) : (
         <TireSilhouette2D comparison={comparison} units={units} />
       )}

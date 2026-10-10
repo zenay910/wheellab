@@ -1,62 +1,67 @@
-import { useMemo } from "react"
+import { useEffect, useMemo } from "react"
+import * as THREE from "three"
 
 import type { TireDimensions } from "@/lib/tire"
 
-import { rubberMaterial, treadGrooveMaterial } from "./materials"
+import { ROLE_COLOR, rubberMaterial, type TireRole } from "./materials"
+import { buildSidewallStripeGeometry, buildTireGeometry } from "./tireGeometry"
 import { MM_TO_SCENE } from "./tireProfile"
 import { WheelMesh } from "./WheelMesh"
 
-const MM = MM_TO_SCENE
-
 interface TireMeshProps {
   dimensions: TireDimensions
-  role: "original" | "proposed"
+  role: TireRole
+  /** Translucent shell only (overlay reference), no wheel. */
   ghost?: boolean
 }
 
-/** Torus cross-section matches nominal OD and rim diameter; wheel sits in the bore. */
+/** Revolved tire body with tread, role-colored sidewall stripe, and wheel. Axle along Z, resting on y = 0. */
 export function TireMesh({ dimensions, role, ghost }: TireMeshProps) {
-  const { major, minor, axleY } = useMemo(() => {
-    const outerR = (dimensions.overallDiameterMm / 2) * MM
-    const rimR = (dimensions.rimDiameterMm / 2) * MM
-    return {
-      major: (outerR + rimR) / 2,
-      minor: (outerR - rimR) / 2,
-      axleY: outerR,
-    }
-  }, [dimensions])
-
-  const grooves = useMemo(
-    () =>
-      [0.72, 0.82, 0.92].map((t) => ({
-        ringMajor: major + minor * t,
-        tube: 0.0018,
-      })),
-    [major, minor],
+  const tire = useMemo(() => buildTireGeometry(dimensions), [dimensions])
+  const stripe = useMemo(() => buildSidewallStripeGeometry(dimensions), [dimensions])
+  useEffect(
+    () => () => {
+      tire.dispose()
+      stripe.dispose()
+    },
+    [tire, stripe],
   )
 
-  return (
-    <group rotation={[Math.PI / 2, 0, 0]}>
-      <group position={[0, axleY, 0]}>
-        <mesh castShadow receiveShadow>
-          <torusGeometry args={[major, minor, 48, 128]} />
+  const outerR = (dimensions.overallDiameterMm / 2) * MM_TO_SCENE
+
+  if (ghost) {
+    return (
+      <group position={[0, outerR, 0]}>
+        <mesh geometry={tire}>
           <meshStandardMaterial
-            {...rubberMaterial}
-            transparent={ghost}
-            opacity={ghost ? 0.35 : 1}
-            depthWrite={!ghost}
+            color={ROLE_COLOR[role]}
+            roughness={0.6}
+            transparent
+            opacity={0.12}
+            depthWrite={false}
+            side={THREE.DoubleSide}
           />
         </mesh>
-
-        {grooves.map(({ ringMajor, tube }, i) => (
-          <mesh key={i}>
-            <torusGeometry args={[ringMajor, tube, 8, 96]} />
-            <meshStandardMaterial {...treadGrooveMaterial} />
-          </mesh>
-        ))}
-
-        <WheelMesh dimensions={dimensions} role={role} />
       </group>
+    )
+  }
+
+  return (
+    <group position={[0, outerR, 0]}>
+      <mesh geometry={tire} castShadow receiveShadow>
+        <meshStandardMaterial {...rubberMaterial} />
+      </mesh>
+      {[1, -1].map((side) => (
+        <mesh key={side} geometry={stripe} scale={[1, 1, side]}>
+          <meshStandardMaterial
+            color={ROLE_COLOR[role]}
+            roughness={0.5}
+            metalness={0.1}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+      ))}
+      <WheelMesh dimensions={dimensions} role={role} />
     </group>
   )
 }
