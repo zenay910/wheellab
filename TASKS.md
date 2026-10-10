@@ -5,7 +5,7 @@
 | | Task |
 |---|------|
 | **Now** | — (await approval for next task) |
-| **Next** | T04 — tire types, parse, validate + tests |
+| **Next** | T05 — geometry and compare + tests |
 | **Blocked** | — |
 
 Phase time targets (Mountain Time, deadline Sat 12:00 PM):
@@ -63,8 +63,14 @@ Phase time targets (Mountain Time, deadline Sat 12:00 PM):
 ## Phase 1 — Tire library
 
 ### T04 — Types, parse, validate + tests
-- **Priority:** P0 | **Status:** pending | **Deps:** T03
+- **Priority:** P0 | **Status:** done | **Deps:** T03
 - **AC:** `types.ts`, `parse.ts`, `validate.ts`; tests for formats, prefixes, invalid input, ranges.
+- **Verified (2026-10-09):**
+  - `src/lib/tire/`: `types.ts` (`TireSize`, `ParseResult`, `ValidationResult`, field-scoped `ValidationIssue`), `parse.ts` (`parseTireSize`), `validate.ts` (`validateTireSize`, `TIRE_LIMITS`), `index.ts` barrel. Pure TS, no React.
+  - Parse = syntax only; validate = ranges. Accepts `P`/`LT` prefixes, case-insensitive, `R`/`ZR`/legacy `VR`-style/`D`/`B`/`-`/space separators, flexible spacing, half-inch rims, and ignores trailing service description (`91V`, `121/118S`, `XL`/`RF`/`SL`). Flotation (`33x12.50R17`) → `unsupported-format` error (P2). Error codes: `empty`, `unsupported-format`, `invalid-format`.
+  - Validate per PROJECT.md: width 105–445 mm, aspect 20–95, rim 10–30 in with 0.5 in increments; width/aspect must be integers; non-finite → error; width not a multiple of 5 mm → **warning** (still valid). Max one error per field.
+  - Tests: `parse.test.ts` + `validate.test.ts` (68 cases) + smoke = 70 passing. `npm run build`, `lint`, `test` green.
+  - **Not in scope:** `ST` (trailer) prefix rejected; `TireDimensions` type deferred to T05.
 
 ### T05 — Geometry and compare + tests
 - **Priority:** P0 | **Status:** pending | **Deps:** T04
