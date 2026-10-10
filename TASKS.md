@@ -157,8 +157,9 @@ Phase time targets (Mountain Time, deadline Sat 12:00 PM):
 - **Verified (2026-10-09):** `tireProfile.ts` + `TireMesh.tsx` — lathe profile from `TireDimensions`, 96 segments, rubber + minimal rim lathe (full wheel deferred to T15), geometry dispose on change, auto-lift so contact sits on ground plane.
 
 ### T15 — WheelMesh
-- **Priority:** P1 | **Status:** pending | **Deps:** T14
+- **Priority:** P1 | **Status:** done | **Deps:** T14
 - **AC:** Barrel, face, spokes, hub.
+- **Verified (2026-10-09):** `WheelMesh.tsx` — barrel cylinder, outboard/inboard faces, 5 spokes, hub cap; proposed accent ring per DESIGN.md. Tire body switched to **torus** (OD + rim bore) so wheels are visible; tread groove rings; shared `materials.ts`; lighting bump in `TireScene`. Tests: `tireProfile.test.ts` (171 total). Build/lint/test green.
 
 ### T16 — Side-by-side and overlay modes
 - **Priority:** P1 | **Status:** done | **Deps:** T14

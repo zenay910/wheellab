@@ -46,19 +46,32 @@ function SceneContent({ comparison, mode, compact }: TireSceneProps) {
 
   return (
     <>
-      <ambientLight intensity={0.25} />
-      <directionalLight position={[4, 6, 3]} intensity={1.1} castShadow shadow-mapSize={[1024, 1024]} />
-      <Environment resolution={256}>
-        <Lightformer form="rect" intensity={3} rotation-x={Math.PI / 2} position={[0, 4, 0]} scale={[8, 8, 1]} />
-        <Lightformer form="rect" intensity={2} rotation-y={Math.PI / 2} position={[-4, 2, 0]} scale={[6, 6, 1]} />
-        <Lightformer form="ring" intensity={1.5} rotation-y={Math.PI / 2} position={[4, 2, 2]} scale={3} />
+      <ambientLight intensity={0.32} />
+      <directionalLight
+        position={[5, 8, 4]}
+        intensity={1.35}
+        castShadow
+        shadow-mapSize={[2048, 2048]}
+        shadow-camera-far={20}
+        shadow-camera-left={-4}
+        shadow-camera-right={4}
+        shadow-camera-top={4}
+        shadow-camera-bottom={-1}
+        shadow-bias={-0.0002}
+      />
+      <directionalLight position={[-3, 4, -2]} intensity={0.35} />
+      <Environment resolution={512}>
+        <Lightformer form="rect" intensity={4} rotation-x={Math.PI / 2} position={[0, 5, 0]} scale={[10, 10, 1]} />
+        <Lightformer form="rect" intensity={2.5} rotation-y={Math.PI / 2} position={[-5, 2.5, 1]} scale={[8, 8, 1]} />
+        <Lightformer form="ring" intensity={2} rotation-y={Math.PI / 2} position={[5, 2, 3]} scale={4} />
+        <Lightformer form="rect" intensity={1.2} position={[0, 1, -5]} scale={[6, 3, 1]} />
       </Environment>
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow position={[0, 0, 0]}>
-        <planeGeometry args={[12, 12]} />
-        <meshStandardMaterial color="#141414" roughness={0.95} metalness={0} />
+        <planeGeometry args={[14, 14]} />
+        <meshStandardMaterial color="#121212" roughness={0.92} metalness={0.05} />
       </mesh>
-      <ContactShadows position={[0, 0.001, 0]} opacity={0.45} scale={12} blur={2.5} far={4} />
+      <ContactShadows position={[0, 0.001, 0]} opacity={0.55} scale={14} blur={2.8} far={5} />
 
       <group position={[-separation, 0, 0]}>
         <TireMesh dimensions={comparison.original} role="original" ghost={mode === "overlay"} />
