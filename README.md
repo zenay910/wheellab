@@ -29,7 +29,7 @@ Open the URL shown in the terminal (default Vite port).
 | `npm run dev` | Development server with HMR |
 | `npm run build` | Typecheck + production build |
 | `npm run lint` | ESLint |
-| `npm test` | Run Vitest (after T03) |
+| `npm test` | Run Vitest once |
 
 ## Project docs
 

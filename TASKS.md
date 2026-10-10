@@ -5,7 +5,7 @@
 | | Task |
 |---|------|
 | **Now** | — (await approval for next task) |
-| **Next** | T03 — dependencies, Vitest, template cleanup |
+| **Next** | T04 — tire types, parse, validate + tests |
 | **Blocked** | — |
 
 Phase time targets (Mountain Time, deadline Sat 12:00 PM):
@@ -42,13 +42,21 @@ Phase time targets (Mountain Time, deadline Sat 12:00 PM):
   - Git root = Vite app root (`wheellab/`); `main` tracks `origin` → https://github.com/zenay910/wheellab (public, GitHub API 200).
   - Vercel project imported from GitHub (auto-deploy on push to `main`): https://wheellab-eight.vercel.app/ — HTTP 200, JS bundle hash matches local `npm run build`, placeholder Vite page renders in browser.
   - `npm run build` passes. No `vercel.json` needed (Vite defaults, no router).
-  - **Known issue (carry to T03):** `npm run lint` fails with 1 error — `react-refresh/only-export-components` in shadcn-generated `src/components/ui/button.tsx` (exports `buttonVariants`). Fix in T03 via an ESLint override for `src/components/ui/**`.
+  - **Known issue (resolved in T03):** `npm run lint` fails with 1 error — `react-refresh/only-export-components` in shadcn-generated `src/components/ui/button.tsx` (exports `buttonVariants`). Fix in T03 via an ESLint override for `src/components/ui/**`.
 
 ### T03 — Dependencies, Vitest, template cleanup
 - **Priority:** P0
-- **Status:** pending
+- **Status:** done
 - **Deps:** T01
 - **AC:** `three`, `@react-three/fiber`, `@react-three/drei`, `@types/three`, `vitest` installed; `"test": "vitest run"`; smoke test passes; Vite template cruft removed; `npm run build`, `lint`, `test` green.
+- **Verified (2026-10-09):**
+  - Dependencies added (all pre-approved in PROJECT.md stack): `three@0.186.1`, `@react-three/fiber@9.8.1`, `@react-three/drei@10.7.9`; dev: `@types/three@0.186.0`, `vitest@5.0.3`. Throwaway file importing `Canvas`, `OrbitControls`, `LatheGeometry` passed `tsc -b` (then deleted).
+  - `"test": "vitest run"`; no separate Vitest config (uses `vite.config.ts`, so `@/` alias works). Smoke test `src/lib/utils.test.ts` (2 tests on `cn`) passes.
+  - Removed template cruft: `src/App.css`, `src/assets/*`, `public/favicon.svg`, `public/icons.svg`, Vite counter page. `App.tsx` is a minimal token-styled placeholder (replaced in T07). Title → `WheelLab`.
+  - ESLint: `react-refresh/only-export-components` off for `src/components/ui/**` (shadcn exports variants alongside components) — fixes the T02 lint error.
+  - `vite.config.ts`: `__dirname` → `import.meta.dirname` (removes Vite native-config-loader warning).
+  - `npm run build`, `npm run lint`, `npm test` all green. Preview build renders placeholder.
+  - **Notes:** No favicon until a design pass (T07). `npm audit` reports 7 high-severity advisories, all transitive via the `shadcn` CLI (`fast-glob`/`micromatch`/`ts-morph`) — pre-existing, dev tooling only, not in the client bundle. In the Cursor agent sandbox, Vitest needs to run unsandboxed (worker kill is blocked); unaffected in a normal terminal.
 
 ---
 
